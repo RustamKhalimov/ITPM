@@ -417,3 +417,65 @@
     display: none;
   }
 }
+/* Add Product Form */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: #7257e8;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inventory Search */
+
+.search-container {
+  margin-bottom: 22px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #e1e3e9;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-container input:focus {
+  border-color: #238b58;
+}
+
+.inventory-header,
+.inventory-row {
+  grid-template-columns: 1.2fr 1.2fr 1fr 0.7fr;
+}

@@ -10,12 +10,20 @@
     <div class="sidebar-label">MENU</div>
 
     <nav class="navigation">
-      <a class="nav-item active">
+      <a
+        class="nav-item"
+        [class.active]="activeView() === 'dashboard'"
+        (click)="showDashboard()"
+      >
         <span>▦</span>
         Dashboard
       </a>
 
-      <a class="nav-item">
+      <a
+        class="nav-item"
+        [class.active]="activeView() === 'inventory'"
+        (click)="showInventory()"
+      >
         <span>▤</span>
         Inventory
       </a>
@@ -40,7 +48,7 @@
 
     <header class="topbar">
       <div>
-        <h1>Dashboard</h1>
+        <h1>{{ activeView() === 'dashboard' ? 'Dashboard' : 'Inventory' }}</h1>
         <p>Manage your store inventory</p>
       </div>
 
@@ -53,84 +61,164 @@
       </div>
     </header>
 
-    <!-- Welcome -->
-    <section class="welcome-section">
-      <div>
-        <h2>Welcome to FoodSaver 👋</h2>
-        <p>
-          Keep track of your products and prevent food waste.
-        </p>
-      </div>
+    <!-- Dashboard -->
+    @if (activeView() === 'dashboard') {
 
-      <button class="primary-button" (click)="openAddForm()">
-        + Add Product
-      </button>
-    </section>
-
-    <!-- Statistics -->
-    <section class="stats-grid">
-
-      <div class="stat-card">
-        <div class="stat-icon purple">▦</div>
+      <!-- Welcome -->
+      <section class="welcome-section">
         <div>
-          <p>Total Products</p>
-          <h2>{{ totalProducts() }}</h2>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon red">!</div>
-        <div>
-          <p>Expiring Soon</p>
-          <h2>{{ expiringProducts().length }}</h2>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- Expiring Products -->
-    <section class="content-card">
-
-      <div class="section-header">
-        <div>
-          <h2>Urgent Stock</h2>
-          <p>Products expiring within 3 days</p>
+          <h2>Welcome to FoodSaver 👋</h2>
+          <p>Keep track of your products and prevent food waste.</p>
         </div>
 
-        <span class="urgent-badge">
-          {{ expiringProducts().length }} items
-        </span>
-      </div>
+        <button class="primary-button" (click)="openAddForm()">
+          + Add Product
+        </button>
+      </section>
 
-      @if (expiringProducts().length > 0) {
-        <div class="product-table">
+      <!-- Statistics -->
+      <section class="stats-grid">
 
-          <div class="table-header">
-            <span>PRODUCT</span>
-            <span>EXPIRY DATE</span>
-            <span>QUANTITY</span>
-            <span>STATUS</span>
+        <div class="stat-card">
+          <div class="stat-icon purple">▦</div>
+          <div>
+            <p>Total Products</p>
+            <h2>{{ totalProducts() }}</h2>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon red">!</div>
+          <div>
+            <p>Expiring Soon</p>
+            <h2>{{ expiringProducts().length }}</h2>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Expiring Products -->
+      <section class="content-card">
+
+        <div class="section-header">
+          <div>
+            <h2>Urgent Stock</h2>
+            <p>Products expiring within 3 days</p>
           </div>
 
-          @for (product of expiringProducts(); track product.id) {
-            <div class="table-row">
-              <strong>{{ product.name }}</strong>
-              <span>{{ product.expiry_date }}</span>
-              <span>{{ product.quantity }}</span>
-              <span class="urgent-status">Urgent</span>
+          <span class="urgent-badge">
+            {{ expiringProducts().length }} items
+          </span>
+        </div>
+
+        @if (loading()) {
+          <div class="empty-state">
+            <p>Loading products...</p>
+          </div>
+        } @else if (expiringProducts().length > 0) {
+
+          <div class="product-table">
+
+            <div class="table-header">
+              <span>PRODUCT</span>
+              <span>EXPIRY DATE</span>
+              <span>QUANTITY</span>
+              <span>STATUS</span>
             </div>
-          }
 
-        </div>
-      } @else {
-        <div class="empty-state">
-          <div class="empty-icon">✓</div>
-          <h3>No items expire within 3 days.</h3>
-          <p>Your inventory is looking good!</p>
-        </div>
-      }
+            @for (product of expiringProducts(); track product.id) {
+              <div class="table-row">
+                <strong>{{ product.name }}</strong>
+                <span>{{ product.expiry_date }}</span>
+                <span>{{ product.quantity }}</span>
+                <span class="urgent-status">Urgent</span>
+              </div>
+            }
 
-    </section>
+          </div>
+
+        } @else {
+          <div class="empty-state">
+            <div class="empty-icon">✓</div>
+            <h3>No items expire within 3 days.</h3>
+            <p>Your inventory is looking good!</p>
+          </div>
+        }
+
+      </section>
+
+    }
+
+    <!-- Inventory -->
+    @if (activeView() === 'inventory') {
+
+      <section class="welcome-section">
+        <div>
+          <h2>Product Inventory</h2>
+          <p>View and manage all your store products.</p>
+        </div>
+
+        <button class="primary-button" (click)="openAddForm()">
+          + Add Product
+        </button>
+      </section>
+
+      <section class="content-card">
+
+        <div class="section-header">
+          <div>
+            <h2>All Products</h2>
+            <p>{{ totalProducts() }} products in inventory</p>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-container">
+          <input
+            type="text"
+            placeholder="Search by product name or barcode..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+          />
+        </div>
+
+        @if (loading()) {
+          <div class="empty-state">
+            <p>Loading products...</p>
+          </div>
+        } @else if (filteredProducts().length > 0) {
+
+          <div class="product-table">
+
+            <div class="table-header inventory-header">
+              <span>PRODUCT</span>
+              <span>BARCODE</span>
+              <span>EXPIRY DATE</span>
+              <span>QUANTITY</span>
+            </div>
+
+            @for (product of filteredProducts(); track product.id) {
+              <div class="table-row inventory-row">
+                <strong>{{ product.name }}</strong>
+                <span>{{ product.barcode || '—' }}</span>
+                <span>{{ product.expiry_date }}</span>
+                <span>{{ product.quantity }}</span>
+              </div>
+            }
+
+          </div>
+
+        } @else {
+          <div class="empty-state">
+            <div class="empty-icon">⌕</div>
+            <h3>No products found.</h3>
+            <p>Try another search or add a new product.</p>
+          </div>
+        }
+
+      </section>
+
+    }
 
     <!-- Add Product Modal -->
     @if (showAddForm()) {
@@ -148,14 +236,73 @@
             Enter product information manually or scan its barcode.
           </p>
 
-          <div class="form-placeholder">
-            <p>Product form will be connected to Django API.</p>
-            <p>Barcode scanner will be added in a later step.</p>
-          </div>
+          <form (ngSubmit)="saveProduct()" #productForm="ngForm">
 
-          <button class="secondary-button" (click)="closeAddForm()">
-            Close
-          </button>
+            <div class="form-group">
+              <label for="name">Product Name *</label>
+              <input
+                id="name"
+                type="text"
+                name="name"
+                [(ngModel)]="newProduct.name"
+                placeholder="Enter product name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="barcode">Barcode</label>
+              <input
+                id="barcode"
+                type="text"
+                name="barcode"
+                [(ngModel)]="newProduct.barcode"
+                placeholder="Enter barcode"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="expiry_date">Expiry Date *</label>
+              <input
+                id="expiry_date"
+                type="date"
+                name="expiry_date"
+                [(ngModel)]="newProduct.expiry_date"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="quantity">Quantity *</label>
+              <input
+                id="quantity"
+                type="number"
+                name="quantity"
+                [(ngModel)]="newProduct.quantity"
+                min="1"
+                required
+              />
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="closeAddForm()"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                class="primary-button"
+                [disabled]="productForm.invalid || saving()"
+              >
+                {{ saving() ? 'Saving...' : 'Save Product' }}
+              </button>
+            </div>
+
+          </form>
 
         </div>
       </div>
