@@ -8,7 +8,10 @@ class Product(models.Model):
         blank=True,
         null=True
     )
-    expiry_date = models.DateField()
+    expiry_date = models.DateField(
+    null=True,
+    blank=True
+    )
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

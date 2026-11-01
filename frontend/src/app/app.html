@@ -190,44 +190,43 @@
 
           <div class="product-table">
 
-        <div class="table-header inventory-header">
-          <span>PRODUCT</span>
-          <span>BARCODE</span>
-          <span>EXPIRY DATE</span>
-          <span>QUANTITY</span>
-          <span>ACTIONS</span>
-        </div>
-
-        @for (product of filteredProducts(); track product.id) {
-          <div class="table-row inventory-row">
-            <strong>{{ product.name }}</strong>
-
-            <span>{{ product.barcode || '—' }}</span>
-
-            <span>{{ product.expiry_date }}</span>
-
-            <span>{{ product.quantity }}</span>
-
-            <div class="action-buttons">
-              <button
-                class="edit-button"
-                (click)="openEditForm(product)"
-              >
-                Edit
-              </button>
-
-              <button
-                class="delete-button"
-                (click)="deleteProduct(product)"
-              >
-                Delete
-              </button>
+            <div class="table-header inventory-header">
+              <span>PRODUCT</span>
+              <span>BARCODE</span>
+              <span>EXPIRY DATE</span>
+              <span>QUANTITY</span>
+              <span>ACTIONS</span>
             </div>
+
+            @for (product of filteredProducts(); track product.id) {
+              <div class="table-row inventory-row">
+                <strong>{{ product.name }}</strong>
+
+                <span>{{ product.barcode || '—' }}</span>
+
+                <span>{{ product.expiry_date }}</span>
+
+                <span>{{ product.quantity }}</span>
+
+                <div class="action-buttons">
+                  <button
+                    class="edit-button"
+                    (click)="openEditForm(product)"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    class="delete-button"
+                    (click)="deleteProduct(product)"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            }
+
           </div>
-        }
-
-      </div>
-
 
         } @else {
           <div class="empty-state">
@@ -248,7 +247,11 @@
 
           <div class="modal-header">
             <h2>Add New Product</h2>
-            <button class="close-button" (click)="closeAddForm()">
+            <button
+              class="close-button"
+              type="button"
+              (click)="closeAddForm()"
+            >
               ×
             </button>
           </div>
@@ -259,6 +262,7 @@
 
           <form (ngSubmit)="saveProduct()" #productForm="ngForm">
 
+            <!-- Product Name -->
             <div class="form-group">
               <label for="name">Product Name *</label>
               <input
@@ -271,6 +275,7 @@
               />
             </div>
 
+            <!-- Barcode -->
             <div class="form-group">
               <label for="barcode">Barcode</label>
               <input
@@ -282,17 +287,80 @@
               />
             </div>
 
-            <div class="form-group">
-              <label for="expiry_date">Expiry Date *</label>
-              <input
-                id="expiry_date"
-                type="date"
-                name="expiry_date"
-                [(ngModel)]="newProduct.expiry_date"
-                required
-              />
+            <!-- Barcode Scanner Controls -->
+            <div class="scanner-controls">
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="startBarcodeScanner()"
+                [disabled]="scanning()"
+              >
+                {{ scanning() ? 'Scanning...' : 'Scan Barcode' }}
+              </button>
+
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="stopBarcodeScanner()"
+                [disabled]="!scanning()"
+              >
+                Stop Camera
+              </button>
             </div>
 
+            <!-- Camera Preview -->
+            <div
+              class="scanner-preview"
+              [hidden]="!scanning()"
+            >
+              <video
+                #videoElement
+                autoplay
+                muted
+                playsinline
+              ></video>
+
+              <p>Point the camera at a barcode...</p>
+            </div>
+
+            <!-- Error Message -->
+            @if (error()) {
+              <p class="form-error">{{ error() }}</p>
+            }
+
+            <!-- Expiry Date Option -->
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  name="hasExpiryDate"
+                  [(ngModel)]="newProduct.hasExpiryDate"
+                  (ngModelChange)="
+                    !newProduct.hasExpiryDate && (newProduct.expiry_date = '')
+                  "
+                />
+                This product has an expiry date
+              </label>
+            </div>
+
+            @if (newProduct.hasExpiryDate) {
+              <div class="form-group">
+                <label for="expiry_date">Expiry Date *</label>
+                <input
+                  id="expiry_date"
+                  type="date"
+                  name="expiry_date"
+                  [(ngModel)]="newProduct.expiry_date"
+                  required
+                />
+              </div>
+            } @else {
+              <p class="no-expiry-message">
+                This product does not have an expiry date.
+              </p>
+            }
+
+            <!-- Quantity -->
             <div class="form-group">
               <label for="quantity">Quantity *</label>
               <input
@@ -305,6 +373,7 @@
               />
             </div>
 
+            <!-- Form Actions -->
             <div class="form-actions">
               <button
                 type="button"

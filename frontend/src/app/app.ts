@@ -13,9 +13,12 @@ import {
   ProductService
 } from './services/product';
 
+import { BarcodeScannerService } from './services/barcode-scanner';
+import { ElementRef, ViewChild } from '@angular/core';
 interface ProductForm {
   name: string;
   barcode: string;
+  hasExpiryDate: boolean;
   expiry_date: string;
   quantity: number;
 }
@@ -29,6 +32,13 @@ interface ProductForm {
 })
 export class App implements OnInit {
   private readonly productService = inject(ProductService);
+
+  private readonly barcodeScanner = inject(BarcodeScannerService);
+
+  @ViewChild('videoElement')
+  private videoElement?: ElementRef<HTMLVideoElement>;
+
+  protected readonly scanning = signal(false);
 
   protected readonly title = 'FoodSaver';
 
@@ -65,12 +75,13 @@ export class App implements OnInit {
     () => this.products().length
   );
 
-  protected readonly newProduct: ProductForm = {
-    name: '',
-    barcode: '',
-    expiry_date: '',
-    quantity: 1
-  };
+ protected readonly newProduct: ProductForm = {
+  name: '',
+  barcode: '',
+  hasExpiryDate: true,
+  expiry_date: '',
+  quantity: 1
+};
 
   ngOnInit(): void {
     this.loadProducts();
@@ -121,7 +132,8 @@ export class App implements OnInit {
 
     this.newProduct.name = product.name;
     this.newProduct.barcode = product.barcode ?? '';
-    this.newProduct.expiry_date = product.expiry_date;
+    this.newProduct.hasExpiryDate = product.expiry_date !== null;
+    this.newProduct.expiry_date = product.expiry_date ?? '';
     this.newProduct.quantity = product.quantity;
 
     this.editingProductId.set(product.id);
@@ -129,13 +141,44 @@ export class App implements OnInit {
   }
 
   protected closeAddForm(): void {
+    this.stopBarcodeScanner();
     this.showAddForm.set(false);
     this.resetForm();
   }
 
+  protected async startBarcodeScanner(): Promise<void> {
+    const video = this.videoElement?.nativeElement;
+
+    if (!video) {
+      this.error.set('Camera element not found.');
+      return;
+    }
+
+    this.error.set('');
+    this.scanning.set(true);
+
+    await this.barcodeScanner.startScanner(
+      video,
+      (barcode) => {
+        this.newProduct.barcode = barcode;
+        this.scanning.set(false);
+      },
+      (message) => {
+        this.error.set(message);
+        this.scanning.set(false);
+      }
+    );
+}
+
+protected stopBarcodeScanner(): void {
+  this.barcodeScanner.stopScanner();
+  this.scanning.set(false);
+}
+
   private resetForm(): void {
     this.newProduct.name = '';
     this.newProduct.barcode = '';
+    this.newProduct.hasExpiryDate = true;
     this.newProduct.expiry_date = '';
     this.newProduct.quantity = 1;
 
@@ -145,9 +188,10 @@ export class App implements OnInit {
   protected saveProduct(): void {
     if (
       !this.newProduct.name.trim() ||
-      !this.newProduct.expiry_date ||
+      (this.newProduct.hasExpiryDate && !this.newProduct.expiry_date) ||
       this.newProduct.quantity < 1
-    ) {
+    )
+    {
       this.error.set('Please fill in all required fields correctly.');
       return;
     }
@@ -158,7 +202,9 @@ export class App implements OnInit {
     const product = {
       name: this.newProduct.name.trim(),
       barcode: this.newProduct.barcode.trim() || null,
-      expiry_date: this.newProduct.expiry_date,
+      expiry_date: this.newProduct.hasExpiryDate
+        ? this.newProduct.expiry_date
+        : null,
       quantity: Number(this.newProduct.quantity)
     };
 

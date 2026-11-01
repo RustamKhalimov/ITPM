@@ -6,7 +6,7 @@ export interface Product {
   id: number;
   name: string;
   barcode: string | null;
-  expiry_date: string;
+  expiry_date: string | null;
   quantity: number;
   created_at?: string;
   updated_at?: string;
