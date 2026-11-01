@@ -190,23 +190,44 @@
 
           <div class="product-table">
 
-            <div class="table-header inventory-header">
-              <span>PRODUCT</span>
-              <span>BARCODE</span>
-              <span>EXPIRY DATE</span>
-              <span>QUANTITY</span>
+        <div class="table-header inventory-header">
+          <span>PRODUCT</span>
+          <span>BARCODE</span>
+          <span>EXPIRY DATE</span>
+          <span>QUANTITY</span>
+          <span>ACTIONS</span>
+        </div>
+
+        @for (product of filteredProducts(); track product.id) {
+          <div class="table-row inventory-row">
+            <strong>{{ product.name }}</strong>
+
+            <span>{{ product.barcode || '—' }}</span>
+
+            <span>{{ product.expiry_date }}</span>
+
+            <span>{{ product.quantity }}</span>
+
+            <div class="action-buttons">
+              <button
+                class="edit-button"
+                (click)="openEditForm(product)"
+              >
+                Edit
+              </button>
+
+              <button
+                class="delete-button"
+                (click)="deleteProduct(product)"
+              >
+                Delete
+              </button>
             </div>
-
-            @for (product of filteredProducts(); track product.id) {
-              <div class="table-row inventory-row">
-                <strong>{{ product.name }}</strong>
-                <span>{{ product.barcode || '—' }}</span>
-                <span>{{ product.expiry_date }}</span>
-                <span>{{ product.quantity }}</span>
-              </div>
-            }
-
           </div>
+        }
+
+      </div>
+
 
         } @else {
           <div class="empty-state">

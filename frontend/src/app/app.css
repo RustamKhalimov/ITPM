@@ -479,3 +479,44 @@ button:disabled {
 .inventory-row {
   grid-template-columns: 1.2fr 1.2fr 1fr 0.7fr;
 }
+
+/* Inventory Actions */
+
+.inventory-header,
+.inventory-row {
+  grid-template-columns: 1.1fr 1fr 1fr 0.6fr 1fr;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-button,
+.delete-button {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.edit-button {
+  background: #eaf5ee;
+  color: #238b58;
+}
+
+.delete-button {
+  background: #fff0f0;
+  color: #d34d4d;
+}
+
+.edit-button:hover {
+  background: #d8eddf;
+}
+
+.delete-button:hover {
+  background: #ffe0e0;
+}

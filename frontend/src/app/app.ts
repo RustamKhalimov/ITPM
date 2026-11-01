@@ -32,27 +32,30 @@ export class App implements OnInit {
 
   protected readonly title = 'FoodSaver';
 
-  protected readonly activeView = signal<'dashboard' | 'inventory'>('dashboard');
+  protected readonly activeView =
+    signal<'dashboard' | 'inventory'>('dashboard');
 
   protected readonly searchQuery = signal('');
 
   protected readonly filteredProducts = computed(() => {
-  const query = this.searchQuery().trim().toLowerCase();
+    const query = this.searchQuery().trim().toLowerCase();
 
-  if (!query) {
-    return this.products();
-  }
+    if (!query) {
+      return this.products();
+    }
 
-  return this.products().filter(product =>
-    product.name.toLowerCase().includes(query) ||
-    (product.barcode ?? '').toLowerCase().includes(query)
-  );
-});
+    return this.products().filter(product =>
+      product.name.toLowerCase().includes(query) ||
+      (product.barcode ?? '').toLowerCase().includes(query)
+    );
+  });
 
   protected readonly products = signal<Product[]>([]);
   protected readonly expiringProducts = signal<Product[]>([]);
 
   protected readonly showAddForm = signal(false);
+  protected readonly editingProductId = signal<number | null>(null);
+
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly error = signal('');
@@ -84,7 +87,7 @@ export class App implements OnInit {
       },
       error: (err) => {
         console.error('Error loading products:', err);
-        this.error.set('Unable to load products. Check the backend server.');
+        this.error.set('Unable to load products.');
         this.loading.set(false);
       }
     });
@@ -95,27 +98,48 @@ export class App implements OnInit {
       },
       error: (err) => {
         console.error('Error loading expiring products:', err);
-        this.error.set('Unable to load expiring products.');
       }
     });
   }
 
-  protected openAddForm(): void {
-    this.error.set('');
-    this.success.set('');
-    this.showAddForm.set(true);
-  }
-
   protected showDashboard(): void {
-  this.activeView.set('dashboard');
+    this.activeView.set('dashboard');
   }
 
   protected showInventory(): void {
     this.activeView.set('inventory');
   }
 
+  protected openAddForm(): void {
+    this.resetForm();
+    this.editingProductId.set(null);
+    this.showAddForm.set(true);
+  }
+
+  protected openEditForm(product: Product): void {
+    this.resetForm();
+
+    this.newProduct.name = product.name;
+    this.newProduct.barcode = product.barcode ?? '';
+    this.newProduct.expiry_date = product.expiry_date;
+    this.newProduct.quantity = product.quantity;
+
+    this.editingProductId.set(product.id);
+    this.showAddForm.set(true);
+  }
+
   protected closeAddForm(): void {
     this.showAddForm.set(false);
+    this.resetForm();
+  }
+
+  private resetForm(): void {
+    this.newProduct.name = '';
+    this.newProduct.barcode = '';
+    this.newProduct.expiry_date = '';
+    this.newProduct.quantity = 1;
+
+    this.error.set('');
   }
 
   protected saveProduct(): void {
@@ -138,22 +162,49 @@ export class App implements OnInit {
       quantity: Number(this.newProduct.quantity)
     };
 
-    this.productService.addProduct(product).subscribe({
+    const productId = this.editingProductId();
+
+    const request = productId !== null
+      ? this.productService.updateProduct(productId, product)
+      : this.productService.addProduct(product);
+
+    request.subscribe({
       next: () => {
         this.saving.set(false);
-        this.showAddForm.set(false);
-
-        this.newProduct.name = '';
-        this.newProduct.barcode = '';
-        this.newProduct.expiry_date = '';
-        this.newProduct.quantity = 1;
-
+        this.closeAddForm();
         this.loadProducts();
+
+        this.success.set(
+          productId !== null
+            ? 'Product updated successfully!'
+            : 'Product added successfully!'
+        );
       },
       error: (err) => {
         console.error('Error saving product:', err);
         this.saving.set(false);
         this.error.set('Unable to save product. Please try again.');
+      }
+    });
+  }
+
+  protected deleteProduct(product: Product): void {
+    const confirmed = confirm(
+      `Are you sure you want to delete "${product.name}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.productService.deleteProduct(product.id).subscribe({
+      next: () => {
+        this.loadProducts();
+        this.success.set('Product deleted successfully!');
+      },
+      error: (err) => {
+        console.error('Error deleting product:', err);
+        this.error.set('Unable to delete product.');
       }
     });
   }
