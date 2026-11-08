@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { BarcodeScanner } from './barcode-scanner';
+import { BarcodeScannerService } from './barcode-scanner';
 
-describe('BarcodeScanner', () => {
-  let service: BarcodeScanner;
+describe('BarcodeScannerService', () => {
+  let service: BarcodeScannerService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(BarcodeScanner);
+    service = TestBed.inject(BarcodeScannerService);
   });
 
   it('should be created', () => {

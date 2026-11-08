@@ -28,7 +28,11 @@
         Inventory
       </a>
 
-      <a class="nav-item">
+      <a
+        class="nav-item"
+        [class.active]="activeView() === 'expiring'"
+        (click)="showExpiring()"
+      >
         <span>◷</span>
         Expiring Products
       </a>
@@ -48,7 +52,15 @@
 
     <header class="topbar">
       <div>
-        <h1>{{ activeView() === 'dashboard' ? 'Dashboard' : 'Inventory' }}</h1>
+        <h1>
+          {{
+            activeView() === 'dashboard'
+              ? 'Dashboard'
+              : activeView() === 'inventory'
+                ? 'Inventory'
+                : 'Expiring Products'
+          }}
+        </h1>
         <p>Manage your store inventory</p>
       </div>
 
@@ -60,6 +72,13 @@
         </div>
       </div>
     </header>
+
+    @if (success()) {
+      <div class="success-banner">
+        <span>{{ success() }}</span>
+        <button type="button" class="close-banner" (click)="success.set('')">×</button>
+      </div>
+    }
 
     <!-- Dashboard -->
     @if (activeView() === 'dashboard') {
@@ -90,7 +109,7 @@
         <div class="stat-card">
           <div class="stat-icon red">!</div>
           <div>
-            <p>Expiring Soon</p>
+            <p>Expiring / Expired</p>
             <h2>{{ expiringProducts().length }}</h2>
           </div>
         </div>
@@ -103,7 +122,7 @@
         <div class="section-header">
           <div>
             <h2>Urgent Stock</h2>
-            <p>Products expiring within 3 days</p>
+            <p>Expired products and items expiring within 3 days</p>
           </div>
 
           <span class="urgent-badge">
@@ -131,7 +150,9 @@
                 <strong>{{ product.name }}</strong>
                 <span>{{ product.expiry_date }}</span>
                 <span>{{ product.quantity }}</span>
-                <span class="urgent-status">Urgent</span>
+                <span class="urgent-status">
+                  {{ isExpired(product.expiry_date) ? 'Expired' : 'Urgent' }}
+                </span>
               </div>
             }
 
@@ -145,6 +166,74 @@
           </div>
         }
 
+      </section>
+
+    }
+
+    <!-- Dedicated Expiring Products View -->
+    @if (activeView() === 'expiring') {
+
+      <section class="welcome-section">
+        <div>
+          <h2>Urgent &amp; Expiring Stock</h2>
+          <p>Review expired items and products expiring within 3 days.</p>
+        </div>
+
+        <button class="primary-button" (click)="openAddForm()">
+          + Add Product
+        </button>
+      </section>
+
+      <section class="content-card">
+        <div class="section-header">
+          <div>
+            <h2>Action Required</h2>
+            <p>{{ expiringProducts().length }} urgent items found</p>
+          </div>
+
+          <span class="urgent-badge">
+            {{ expiringProducts().length }} items
+          </span>
+        </div>
+
+        @if (loading()) {
+          <div class="empty-state">
+            <p>Loading products...</p>
+          </div>
+        } @else if (expiringProducts().length > 0) {
+          <div class="product-table">
+            <div class="table-header inventory-header">
+              <span>PRODUCT</span>
+              <span>BARCODE</span>
+              <span>EXPIRY DATE</span>
+              <span>QUANTITY</span>
+              <span>ACTIONS</span>
+            </div>
+
+            @for (product of expiringProducts(); track product.id) {
+              <div class="table-row inventory-row">
+                <strong>{{ product.name }}</strong>
+                <span>{{ product.barcode || '—' }}</span>
+                <span>{{ product.expiry_date }}</span>
+                <span>{{ product.quantity }}</span>
+                <div class="action-buttons">
+                  <button class="edit-button" (click)="openEditForm(product)">
+                    Edit
+                  </button>
+                  <button class="delete-button" (click)="deleteProduct(product)">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-icon">✓</div>
+            <h3>No items expire within 3 days.</h3>
+            <p>Your inventory is looking good!</p>
+          </div>
+        }
       </section>
 
     }
@@ -204,7 +293,7 @@
 
                 <span>{{ product.barcode || '—' }}</span>
 
-                <span>{{ product.expiry_date }}</span>
+                <span>{{ product.expiry_date || 'No expiry' }}</span>
 
                 <span>{{ product.quantity }}</span>
 
@@ -240,13 +329,13 @@
 
     }
 
-    <!-- Add Product Modal -->
+    <!-- Add / Edit Product Modal -->
     @if (showAddForm()) {
       <div class="modal-overlay">
         <div class="modal">
 
           <div class="modal-header">
-            <h2>Add New Product</h2>
+            <h2>{{ editingProductId() !== null ? 'Edit Product' : 'Add New Product' }}</h2>
             <button
               class="close-button"
               type="button"
@@ -283,7 +372,8 @@
                 type="text"
                 name="barcode"
                 [(ngModel)]="newProduct.barcode"
-                placeholder="Enter barcode"
+                (ngModelChange)="lookupCatalogByBarcode($event)"
+                placeholder="Enter or scan barcode"
               />
             </div>
 
@@ -388,7 +478,7 @@
                 class="primary-button"
                 [disabled]="productForm.invalid || saving()"
               >
-                {{ saving() ? 'Saving...' : 'Save Product' }}
+                {{ saving() ? 'Saving...' : (editingProductId() !== null ? 'Update Product' : 'Save Product') }}
               </button>
             </div>
 

@@ -3,7 +3,9 @@ import {
   signal,
   computed,
   inject,
-  OnInit
+  OnInit,
+  ElementRef,
+  ViewChild
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -14,7 +16,7 @@ import {
 } from './services/product';
 
 import { BarcodeScannerService } from './services/barcode-scanner';
-import { ElementRef, ViewChild } from '@angular/core';
+
 interface ProductForm {
   name: string;
   barcode: string;
@@ -43,7 +45,7 @@ export class App implements OnInit {
   protected readonly title = 'FoodSaver';
 
   protected readonly activeView =
-    signal<'dashboard' | 'inventory'>('dashboard');
+    signal<'dashboard' | 'inventory' | 'expiring'>('dashboard');
 
   protected readonly searchQuery = signal('');
 
@@ -75,13 +77,13 @@ export class App implements OnInit {
     () => this.products().length
   );
 
- protected readonly newProduct: ProductForm = {
-  name: '',
-  barcode: '',
-  hasExpiryDate: true,
-  expiry_date: '',
-  quantity: 1
-};
+  protected readonly newProduct: ProductForm = {
+    name: '',
+    barcode: '',
+    hasExpiryDate: true,
+    expiry_date: '',
+    quantity: 1
+  };
 
   ngOnInit(): void {
     this.loadProducts();
@@ -119,6 +121,31 @@ export class App implements OnInit {
 
   protected showInventory(): void {
     this.activeView.set('inventory');
+  }
+
+  protected showExpiring(): void {
+    this.activeView.set('expiring');
+  }
+
+  protected isExpired(expiryDate: string | null): boolean {
+    if (!expiryDate) {
+      return false;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    return expiryDate < today;
+  }
+
+  protected lookupCatalogByBarcode(barcode: string): void {
+    const code = barcode.trim();
+    if (!code) {
+      return;
+    }
+    const match = this.products().find(
+      item => (item.barcode ?? '').trim() === code
+    );
+    if (match && !this.newProduct.name.trim()) {
+      this.newProduct.name = match.name;
+    }
   }
 
   protected openAddForm(): void {
@@ -161,6 +188,7 @@ export class App implements OnInit {
       video,
       (barcode) => {
         this.newProduct.barcode = barcode;
+        this.lookupCatalogByBarcode(barcode);
         this.scanning.set(false);
       },
       (message) => {
@@ -168,12 +196,12 @@ export class App implements OnInit {
         this.scanning.set(false);
       }
     );
-}
+  }
 
-protected stopBarcodeScanner(): void {
-  this.barcodeScanner.stopScanner();
-  this.scanning.set(false);
-}
+  protected stopBarcodeScanner(): void {
+    this.barcodeScanner.stopScanner();
+    this.scanning.set(false);
+  }
 
   private resetForm(): void {
     this.newProduct.name = '';
@@ -190,8 +218,7 @@ protected stopBarcodeScanner(): void {
       !this.newProduct.name.trim() ||
       (this.newProduct.hasExpiryDate && !this.newProduct.expiry_date) ||
       this.newProduct.quantity < 1
-    )
-    {
+    ) {
       this.error.set('Please fill in all required fields correctly.');
       return;
     }
