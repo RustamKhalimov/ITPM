@@ -8,6 +8,24 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./pages/login/login')
+        .then(m => m.Login)
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./pages/register/register')
+        .then(m => m.Register)
+  },
+  {
+    path: 'account',
+    loadComponent: () =>
+      import('./pages/account/account')
+        .then(m => m.Account)
+  },
+  {
     path: 'overview',
     loadComponent: () =>
       import('./pages/overview/overview')
@@ -24,5 +42,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/rules/rules')
         .then(m => m.Rules)
+  },
+  {
+    path: '**',
+    redirectTo: 'overview'
   }
 ];
