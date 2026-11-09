@@ -6,11 +6,20 @@ export interface Product {
   id: number;
   name: string;
   barcode: string | null;
+  image_url: string | null;
+  category: string;
   expiry_date: string | null;
   quantity: number;
+  regular_price: number;
+  unit_size: string | null;
   created_at?: string;
   updated_at?: string;
 }
+
+export type ProductPayload = Omit<
+  Product,
+  'id' | 'created_at' | 'updated_at'
+>;
 
 @Injectable({
   providedIn: 'root'
@@ -30,11 +39,14 @@ export class ProductService {
     );
   }
 
-  addProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Observable<Product> {
+  addProduct(product: ProductPayload): Observable<Product> {
     return this.http.post<Product>(this.apiUrl, product);
   }
 
-  updateProduct(id: number, product: Partial<Product>): Observable<Product> {
+  updateProduct(
+    id: number,
+    product: Partial<ProductPayload>
+  ): Observable<Product> {
     return this.http.patch<Product>(
       `${this.apiUrl}${id}/`,
       product

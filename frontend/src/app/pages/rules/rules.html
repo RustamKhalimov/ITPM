@@ -1,0 +1,172 @@
+
+<div class="rules-page">
+
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">MANAGEMENT</span>
+      <h1>Discount Rules</h1>
+      <p>Manage automatic discounts for products close to expiration.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="message-card">
+      Loading discount settings...
+    </div>
+  } @else if (rules(); as rule) {
+
+    @if (error()) {
+      <div class="alert error">{{ error() }}</div>
+    }
+
+    @if (success()) {
+      <div class="alert success">{{ success() }}</div>
+    }
+
+    <section class="settings-card">
+      <div class="card-heading">
+        <div class="heading-icon">⚙️</div>
+        <div>
+          <h2>Automatic discounts</h2>
+          <p>Automatically reduce prices as expiration dates approach.</p>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <strong>Enable automatic discounts</strong>
+          <p>
+            {{ rule.enabled ? 'Automatic discounts are active.' : 'Automatic discounts are disabled.' }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="toggle"
+          [class.active]="rule.enabled"
+          [attr.aria-pressed]="rule.enabled"
+          (click)="toggleAutomaticDiscounts()">
+          <span></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="discount-section">
+      <div class="section-heading">
+        <div>
+          <h2>Discount schedule</h2>
+          <p>Choose how much to reduce the price before expiration.</p>
+        </div>
+      </div>
+
+      <div class="discount-grid">
+
+        <article class="discount-card">
+          <div class="discount-icon yellow">📅</div>
+          <span class="time-label">2 DAYS BEFORE</span>
+          <h3>Approaching expiry</h3>
+          <p>Products expiring in two days.</p>
+
+          <label for="twoDays">Discount percentage</label>
+          <div class="percentage-input">
+            <input
+              id="twoDays"
+              type="number"
+              min="0"
+              max="100"
+              [ngModel]="rule.two_days_discount"
+              (ngModelChange)="updateField('two_days_discount', $event)">
+            <span>%</span>
+          </div>
+        </article>
+
+        <article class="discount-card">
+          <div class="discount-icon orange">⏰</div>
+          <span class="time-label">1 DAY BEFORE</span>
+          <h3>Urgent expiry</h3>
+          <p>Products expiring tomorrow.</p>
+
+          <label for="oneDay">Discount percentage</label>
+          <div class="percentage-input">
+            <input
+              id="oneDay"
+              type="number"
+              min="0"
+              max="100"
+              [ngModel]="rule.one_day_discount"
+              (ngModelChange)="updateField('one_day_discount', $event)">
+            <span>%</span>
+          </div>
+        </article>
+
+        <article class="discount-card">
+          <div class="discount-icon red">🔥</div>
+          <span class="time-label">EXPIRY DAY</span>
+          <h3>Last chance</h3>
+          <p>Products expiring today.</p>
+
+          <label for="expiryDay">Discount percentage</label>
+          <div class="percentage-input">
+            <input
+              id="expiryDay"
+              type="number"
+              min="0"
+              max="100"
+              [ngModel]="rule.expiry_day_discount"
+              (ngModelChange)="updateField('expiry_day_discount', $event)">
+            <span>%</span>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="preview-card">
+      <h2>Discount preview</h2>
+      <p>Example: how a product with a regular price of ₸1,000 would be priced.</p>
+
+      <div class="preview-grid">
+        <div>
+          <span>2 days before</span>
+          <strong>₸{{ 1000 * (1 - rule.two_days_discount / 100) }}</strong>
+          <small>{{ rule.two_days_discount }}% off</small>
+        </div>
+
+        <div>
+          <span>1 day before</span>
+          <strong>₸{{ 1000 * (1 - rule.one_day_discount / 100) }}</strong>
+          <small>{{ rule.one_day_discount }}% off</small>
+        </div>
+
+        <div>
+          <span>Expiry day</span>
+          <strong>₸{{ 1000 * (1 - rule.expiry_day_discount / 100) }}</strong>
+          <small>{{ rule.expiry_day_discount }}% off</small>
+        </div>
+      </div>
+
+      @if (!rule.enabled) {
+        <p class="disabled-note">
+          Automatic discounts are currently disabled. This preview shows the configured values only.
+        </p>
+      }
+    </section>
+
+    <div class="actions">
+      <button
+        type="button"
+        class="reset-button"
+        (click)="resetRules()">
+        Reset defaults
+      </button>
+
+      <button
+        type="button"
+        class="save-button"
+        [disabled]="saving()"
+        (click)="saveRules()">
+        {{ saving() ? 'Saving...' : 'Save changes' }}
+      </button>
+    </div>
+  }
+</div>

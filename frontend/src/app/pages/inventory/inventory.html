@@ -1,0 +1,434 @@
+
+<div class="inventory-page">
+
+  <!-- Header -->
+  <header class="inventory-header">
+    <div>
+      <h1>Your inventory</h1>
+      <p>Magnum · Abay Avenue · {{ products().length }} products</p>
+    </div>
+
+    <button
+      class="add-button"
+      type="button"
+      (click)="openAddForm()"
+    >
+      +
+    </button>
+  </header>
+
+  <!-- Search -->
+  <div class="search-box">
+    <span>⌕</span>
+
+    <input
+      type="text"
+      placeholder="Search products or scan a barcode"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+    />
+
+    <button
+      class="scan-icon"
+      type="button"
+      title="Scan barcode"
+      (click)="openAddForm()"
+    >
+      ▥
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-tabs">
+    <button
+      [class.active]="activeFilter() === 'all'"
+      (click)="setFilter('all')"
+    >
+      All {{ products().length }}
+    </button>
+
+    <button
+      [class.active]="activeFilter() === 'expiring'"
+      (click)="setFilter('expiring')"
+    >
+      Expiring
+    </button>
+
+    <button
+      [class.active]="activeFilter() === 'fresh'"
+      (click)="setFilter('fresh')"
+    >
+      Fresh
+    </button>
+  </div>
+
+  <!-- List heading -->
+  <div class="list-heading">
+    <span>Showing {{ filteredProducts().length }} products</span>
+
+    <button type="button" (click)="toggleSort()">
+      ↧ {{ sortOrder() === 'asc' ? 'Expiry date ↑' : 'Expiry date ↓' }}
+    </button>
+  </div>
+
+  <!-- Product List -->
+  @if (loading()) {
+    <div class="empty-state">Loading products...</div>
+  } @else if (error() && !showForm()) {
+    <div class="error-message">{{ error() }}</div>
+  } @else if (filteredProducts().length > 0) {
+
+    <div class="product-list">
+
+      @for (product of filteredProducts(); track product.id) {
+        <article class="product-card">
+
+          <div class="product-image">
+            @if (product.image_url) {
+              <img [src]="product.image_url" [alt]="product.name" />
+            } @else {
+              <span>🥬</span>
+            }
+          </div>
+
+          <div class="product-details">
+            <h3>{{ product.name }}</h3>
+
+            <p>
+              {{ product.expiry_date || 'No expiry date' }}
+              · {{ product.quantity }} units
+            </p>
+
+            <span
+              class="status"
+              [class.urgent]="getDiscount(product) > 0"
+            >
+              {{ getStatus(product) }}
+            </span>
+          </div>
+
+          <div class="product-price">
+            @if (getDiscount(product) > 0) {
+              <del>₸{{ product.regular_price }}</del>
+            }
+
+            <strong>
+            ₸{{ product.regular_price * (1 - getDiscount(product) / 100) | number:'1.0-2' }}
+            </strong>
+
+            @if (getDiscount(product) > 0) {
+              <small>−{{ getDiscount(product) }}%</small>
+            }
+
+            <div class="card-actions">
+              <button
+                type="button"
+                (click)="openEditForm(product)"
+              >
+                Edit
+              </button>
+
+              <button
+                type="button"
+                class="delete-action"
+                (click)="deleteProduct(product)"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+
+        </article>
+      }
+
+    </div>
+
+  } @else {
+    <div class="empty-state">
+      <h3>No products found</h3>
+      <p>Try another search or filter.</p>
+    </div>
+  }
+
+  <!-- Add / Edit Product Modal -->
+  @if (showForm()) {
+    <div class="modal-overlay">
+
+      <div class="product-modal">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div>
+            <span class="eyebrow">PRODUCT MANAGEMENT</span>
+
+            <h2>
+              {{ editingProductId() !== null ? 'Edit product' : 'Add product' }}
+            </h2>
+          </div>
+
+          <button
+            class="close-button"
+            type="button"
+            (click)="closeForm()"
+          >
+            ×
+          </button>
+        </div>
+
+        <p class="modal-description">
+          Enter product details and manage its expiry information.
+        </p>
+
+        <form
+          #productForm="ngForm"
+          (ngSubmit)="saveProduct()"
+        >
+
+          <!-- Image Preview -->
+          <div class="image-section">
+
+            <div class="image-preview">
+              @if (newProduct.image_url) {
+                <img
+                  [src]="newProduct.image_url"
+                  alt="Product preview"
+                />
+              } @else {
+                <span>🥐</span>
+              }
+            </div>
+
+            <div class="image-info">
+              <strong>Product photo</strong>
+              <span>Add an image using its URL below.</span>
+            </div>
+
+          </div>
+
+          <!-- Product Name -->
+          <div class="form-group">
+            <label for="productName">Product name *</label>
+
+            <input
+              id="productName"
+              type="text"
+              name="name"
+              [(ngModel)]="newProduct.name"
+              placeholder="Enter product name"
+              required
+            />
+          </div>
+
+          <!-- Category and Quantity -->
+          <div class="form-row">
+
+            <div class="form-group">
+              <label for="category">Category *</label>
+
+              <select
+                id="category"
+                name="category"
+                [(ngModel)]="newProduct.category"
+                required
+              >
+                @for (category of categories; track category) {
+                  <option [value]="category">
+                    {{ category }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="quantity">Quantity *</label>
+
+              <input
+                id="quantity"
+                type="number"
+                name="quantity"
+                [(ngModel)]="newProduct.quantity"
+                min="1"
+                required
+              />
+            </div>
+
+          </div>
+
+          <!-- Price and Unit Size -->
+          <div class="form-row">
+
+            <div class="form-group">
+              <label for="price">Regular price (₸) *</label>
+
+              <input
+                id="price"
+                type="number"
+                name="regular_price"
+                [(ngModel)]="newProduct.regular_price"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="unitSize">Unit size</label>
+
+              <input
+                id="unitSize"
+                type="text"
+                name="unit_size"
+                [(ngModel)]="newProduct.unit_size"
+                placeholder="80 g"
+              />
+            </div>
+
+          </div>
+
+          <!-- Image URL -->
+          <div class="form-group">
+            <label for="imageUrl">Product image URL</label>
+
+            <input
+              id="imageUrl"
+              type="url"
+              name="image_url"
+              [(ngModel)]="newProduct.image_url"
+              placeholder="https://example.com/product.jpg"
+            />
+          </div>
+
+          <!-- Barcode -->
+          <div class="form-group">
+            <label for="barcode">Barcode</label>
+
+            <input
+              id="barcode"
+              type="text"
+              name="barcode"
+              [(ngModel)]="newProduct.barcode"
+              placeholder="Enter barcode"
+            />
+          </div>
+
+          <!-- Scanner -->
+          <div class="scanner-controls">
+
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="startBarcodeScanner()"
+              [disabled]="scanning()"
+            >
+              {{ scanning() ? 'Scanning...' : 'Scan barcode' }}
+            </button>
+
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="stopBarcodeScanner()"
+              [disabled]="!scanning()"
+            >
+              Stop camera
+            </button>
+
+          </div>
+
+          <!-- Video remains in DOM while form is open -->
+          <div
+            class="scanner-preview"
+            [hidden]="!scanning()"
+          >
+            <video
+              #videoElement
+              autoplay
+              muted
+              playsinline
+            ></video>
+
+            <p>Point the camera at a barcode...</p>
+          </div>
+
+          <!-- Expiry Date -->
+          <div class="form-group expiry-group">
+
+            <label class="expiry-toggle">
+              <input
+                type="checkbox"
+                name="hasExpiryDate"
+                [(ngModel)]="newProduct.hasExpiryDate"
+                (ngModelChange)="
+                  !newProduct.hasExpiryDate &&
+                  (newProduct.expiry_date = '')
+                "
+              />
+
+              This product has an expiry date
+            </label>
+
+          </div>
+
+          @if (newProduct.hasExpiryDate) {
+
+            <div class="form-group">
+              <label for="expiryDate">Expiry date *</label>
+
+              <input
+                id="expiryDate"
+                type="date"
+                name="expiry_date"
+                [(ngModel)]="newProduct.expiry_date"
+                required
+              />
+            </div>
+
+          } @else {
+
+            <p class="no-expiry-message">
+              This product does not have an expiry date.
+            </p>
+
+          }
+
+          <!-- Error -->
+          @if (error()) {
+            <div class="error-message">
+              {{ error() }}
+            </div>
+          }
+
+          <!-- Success -->
+          @if (success()) {
+            <div class="success-message">
+              {{ success() }}
+            </div>
+          }
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+
+            <button
+              type="button"
+              class="cancel-button"
+              (click)="closeForm()"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              class="save-button"
+              [disabled]="productForm.invalid || saving()"
+            >
+              {{ saving() ? 'Saving...' : 'Save product' }}
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  }
+
+</div>

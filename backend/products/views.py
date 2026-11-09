@@ -1,12 +1,15 @@
+
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import Product
-from .serializers import ProductSerializer
+from .models import Product, DiscountRule
+from .serializers import ProductSerializer, DiscountRuleSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -27,4 +30,40 @@ class ProductViewSet(viewsets.ModelViewSet):
         ).order_by('expiry_date', 'name')
 
         serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
+
+class DiscountRuleView(APIView):
+
+    def get(self, request):
+        rules, created = DiscountRule.objects.get_or_create(pk=1)
+
+        serializer = DiscountRuleSerializer(rules)
+        return Response(serializer.data)
+
+    def patch(self, request):
+        rules, created = DiscountRule.objects.get_or_create(pk=1)
+
+        serializer = DiscountRuleSerializer(
+            rules,
+            data=request.data,
+            partial=True
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
+
+    def put(self, request):
+        rules, created = DiscountRule.objects.get_or_create(pk=1)
+
+        serializer = DiscountRuleSerializer(
+            rules,
+            data=request.data
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
         return Response(serializer.data)

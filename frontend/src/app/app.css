@@ -559,6 +559,28 @@ button:disabled {
   margin: 12px 0;
 }
 
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f7f8f1;
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+@media (max-width: 650px) {
+  .main-content {
+    padding-bottom: 85px;
+  }
+}
 
 .success-banner {
   display: flex;

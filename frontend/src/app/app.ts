@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { RouterOutlet } from '@angular/router';
+import { Navigation } from './components/navigation/navigation';
 
 import {
   Product,
@@ -28,7 +30,7 @@ interface ProductForm {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterOutlet, Navigation],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -229,10 +231,14 @@ export class App implements OnInit {
     const product = {
       name: this.newProduct.name.trim(),
       barcode: this.newProduct.barcode.trim() || null,
+      image_url: null,
+      category: 'Other',
       expiry_date: this.newProduct.hasExpiryDate
         ? this.newProduct.expiry_date
         : null,
-      quantity: Number(this.newProduct.quantity)
+      quantity: Number(this.newProduct.quantity),
+      regular_price: 0,
+      unit_size: null
     };
 
     const productId = this.editingProductId();

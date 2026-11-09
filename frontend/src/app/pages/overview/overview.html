@@ -1,0 +1,172 @@
+<div class="overview-page">
+
+  <!-- Welcome -->
+  <section class="welcome-section">
+    <div>
+      <span class="eyebrow">STORE MANAGEMENT</span>
+      <h1>Good morning!</h1>
+      <p>Here's what's happening with your inventory today.</p>
+    </div>
+
+    <div class="date-label">
+      <span>FOODSAVER DASHBOARD</span>
+      <strong>Inventory overview</strong>
+    </div>
+  </section>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="error-message">{{ error() }}</div>
+  }
+
+  <!-- Statistics -->
+  <section class="stats-grid">
+
+    <article class="stat-card">
+      <div class="stat-top">
+        <span>Total Products</span>
+        <span class="stat-icon green">▦</span>
+      </div>
+      <strong class="stat-value">{{ totalProducts() }}</strong>
+      <span class="stat-description">Product records in inventory</span>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-top">
+        <span>Total Units</span>
+        <span class="stat-icon blue">□</span>
+      </div>
+      <strong class="stat-value">{{ totalQuantity() }}</strong>
+      <span class="stat-description">Individual items in stock</span>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-top">
+        <span>Expiring Soon</span>
+        <span class="stat-icon orange">◷</span>
+      </div>
+      <strong class="stat-value">{{ expiringCount() }}</strong>
+      <span class="stat-description">Expiring within 3 days</span>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-top">
+        <span>Stock Value</span>
+        <span class="stat-icon purple">₸</span>
+      </div>
+      <strong class="stat-value">
+        {{ totalValue() | number:'1.0-2' }} ₸
+      </strong>
+      <span class="stat-description">Estimated inventory value</span>
+    </article>
+
+  </section>
+
+  <!-- Main Content -->
+  <section class="overview-grid">
+
+    <!-- Urgent Products -->
+    <article class="content-card urgent-card">
+
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">NEEDS ATTENTION</span>
+          <h2>Expiring Products</h2>
+          <p>Products that need your attention</p>
+        </div>
+
+        <span class="count-badge">
+          {{ expiringCount() }} items
+        </span>
+      </div>
+
+      @if (loading()) {
+        <div class="empty-state">Loading inventory...</div>
+      } @else if (expiringProducts().length > 0) {
+
+        <div class="product-list">
+
+          @for (product of expiringProducts(); track product.id) {
+            <div class="product-item">
+
+              <div class="product-image">
+                @if (product.image_url) {
+                  <img
+                    [src]="product.image_url"
+                    [alt]="product.name"
+                  />
+                } @else {
+                  <span>🥬</span>
+                }
+              </div>
+
+              <div class="product-info">
+                <strong>{{ product.name }}</strong>
+                <span>{{ product.category }}</span>
+              </div>
+
+              <div class="product-expiry">
+                <strong>{{ product.expiry_date }}</strong>
+                <span>Quantity: {{ product.quantity }}</span>
+              </div>
+
+            </div>
+          }
+
+        </div>
+
+      } @else {
+        <div class="empty-state">
+          <span class="empty-icon">✓</span>
+          <h3>Everything looks good!</h3>
+          <p>No products are expiring within 3 days.</p>
+        </div>
+      }
+
+    </article>
+
+    <!-- Inventory Summary -->
+    <article class="content-card summary-card">
+
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">OVERVIEW</span>
+          <h2>Inventory Summary</h2>
+          <p>Your current stock information</p>
+        </div>
+      </div>
+
+      <div class="summary-item">
+        <div>
+          <span>Total products</span>
+          <strong>{{ totalProducts() }}</strong>
+        </div>
+        <span class="summary-icon">📦</span>
+      </div>
+
+      <div class="summary-item">
+        <div>
+          <span>Total units</span>
+          <strong>{{ totalQuantity() }}</strong>
+        </div>
+        <span class="summary-icon">🛒</span>
+      </div>
+
+      <div class="summary-item">
+        <div>
+          <span>Expiring soon</span>
+          <strong>{{ expiringCount() }}</strong>
+        </div>
+        <span class="summary-icon">⏰</span>
+      </div>
+
+      <div class="summary-note">
+        <strong>Waste less, save more.</strong>
+        <p>Keep your inventory updated to reduce food waste.</p>
+      </div>
+
+    </article>
+
+  </section>
+
+</div>
