@@ -10,9 +10,14 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
+
 import { Product, ProductService } from '../../services/product';
 import { BarcodeScannerService } from '../../services/barcode-scanner';
-import { DecimalPipe } from '@angular/common';
+import {
+  DiscountRule,
+  DiscountRuleService
+} from '../../services/discount-rule';
 
 interface ProductForm {
   name: string;
@@ -36,11 +41,14 @@ interface ProductForm {
 export class Inventory implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly barcodeScanner = inject(BarcodeScannerService);
+  private readonly discountRuleService = inject(DiscountRuleService);
 
   @ViewChild('videoElement')
   private videoElement?: ElementRef<HTMLVideoElement>;
 
   protected readonly products = signal<Product[]>([]);
+  protected readonly discountRules = signal<DiscountRule | null>(null);
+
   protected readonly loading = signal(true);
   protected readonly error = signal('');
   protected readonly success = signal('');
@@ -127,6 +135,7 @@ export class Inventory implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+    this.loadDiscountRules();
   }
 
   protected loadProducts(): void {
@@ -142,6 +151,17 @@ export class Inventory implements OnInit {
         console.error(err);
         this.error.set('Unable to load inventory.');
         this.loading.set(false);
+      }
+    });
+  }
+
+  protected loadDiscountRules(): void {
+    this.discountRuleService.getRules().subscribe({
+      next: rules => {
+        this.discountRules.set(rules);
+      },
+      error: err => {
+        console.error('Unable to load discount rules:', err);
       }
     });
   }
@@ -178,20 +198,25 @@ export class Inventory implements OnInit {
   }
 
   protected getDiscount(product: Product): number {
-    if (!product.expiry_date) return 0;
+    const rules = this.discountRules();
+
+    if (!rules || !rules.enabled || !product.expiry_date) {
+      return 0;
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const expiry = new Date(`${product.expiry_date}T00:00:00`);
+
     const days = Math.round(
       (expiry.getTime() - today.getTime()) / 86400000
     );
 
     if (days < 0) return 0;
-    if (days === 0) return 50;
-    if (days === 1) return 30;
-    if (days === 2) return 20;
+    if (days === 0) return rules.expiry_day_discount;
+    if (days === 1) return rules.one_day_discount;
+    if (days === 2) return rules.two_days_discount;
 
     return 0;
   }
